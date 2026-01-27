@@ -1,0 +1,10 @@
+name: cosmos-next
+description: Hetzner infrastructure, powered by Pulumi
+runtime:
+  name: python
+  options:
+    toolchain: uv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: python

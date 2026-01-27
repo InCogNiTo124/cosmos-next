@@ -1,0 +1,9 @@
+[project]
+name = "cosmos-next"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pulumi>=3.0.0,<4.0.0",
+    "pulumi-command>=1.1.3",
+    "pulumi-hcloud>=1.31.0",
+]
