@@ -49,6 +49,14 @@ write_files:
             ]
           }
 
+  # Create ArgoCD Namespace
+  - path: /var/lib/rancher/k3s/server/manifests/argocd-namespace.yaml
+    content: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: argocd
+
 runcmd:
   # Ensure the mount point exists (cloud-init mounts usually handle this, but for safety)
   - mkdir -p /data
@@ -62,3 +70,6 @@ runcmd:
   
   # Install k3s
   - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.34.3+k3s1 sh -
+
+  # Download ArgoCD install manifest
+  - curl -L -o /var/lib/rancher/k3s/server/manifests/argocd-install.yaml https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
