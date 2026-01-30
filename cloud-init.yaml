@@ -1,11 +1,62 @@
 #cloud-config
 
+mounts:
+  - [ "/dev/disk/by-id/scsi-0HC_Volume_{{ volume_id }}", "/data", "ext4", "discard,defaults", "0", "2" ]
+
 write_files:
   - path: /etc/environment
     content: |-
       KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
+  # Configure Traefik to use the persistent volume for ACME
+  - path: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChartConfig
+      metadata:
+        name: traefik
+        namespace: kube-system
+      spec:
+        valuesContent: |-
+          additionalArguments:
+            - "--certificatesresolvers.myresolver.acme.email={{ email }}"
+            - "--certificatesresolvers.myresolver.acme.storage=/data/traefik/acme.json"
+            - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+            - "--certificatesresolvers.myresolver.acme.caserver={{ ca_server }}"
+          volumes:
+            - name: data-volume
+              mountPath: "/data"
+              hostPath: "/data"
+
+  # Reconfigure Local Path Provisioner to use /data/k3s-storage
+  - path: /var/lib/rancher/k3s/server/manifests/local-path-storage.yaml
+    content: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: local-path-config
+        namespace: kube-system
+      data:
+        config.json: |-
+          {
+            "nodePathMap": [
+              {
+                "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+                "paths": [
+                  "/data/k3s-storage"
+                ]
+              }
+            ]
+          }
+
 runcmd:
+  # Ensure the mount point exists (cloud-init mounts usually handle this, but for safety)
+  - mkdir -p /data
+  
+  # Ensure subdirectories exist
+  - mkdir -p -m 0755 /data/traefik
+  - mkdir -p -m 0755 /data/k3s-storage
+
   # Install k9s
   - wget https://github.com/derailed/k9s/releases/download/v0.50.16/k9s_Linux_amd64.tar.gz && tar -xzvf k9s_Linux_amd64.tar.gz && mv k9s /usr/local/bin/ && rm k9s_Linux_amd64.tar.gz
   
