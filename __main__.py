@@ -34,11 +34,24 @@ cloud_init_data = volume.id.apply(create_cloud_init)
 
 ssh_key = hcloud.SshKey("ARIES", public_key=os.environ.get("ARIES_PUB"))
 
+# Create Static IP
+static_ip = hcloud.PrimaryIp(
+    "static-ip",
+    location="fsn1",
+    type="ipv4",
+    assignee_type="server",
+    auto_delete=False,
+)
+
 # 3. Define server
 test_server = hcloud.Server(
     "test-server",
     location="fsn1",
-    public_nets=[hcloud.ServerPublicNetArgs(ipv4_enabled=True, ipv6_enabled=False)],
+    public_nets=[hcloud.ServerPublicNetArgs(
+        ipv4_enabled=True,
+        ipv4=static_ip.id,
+        ipv6_enabled=False
+    )],
     ssh_keys=[ssh_key.id],
     server_type="cx33",
     image="ubuntu-24.04",
