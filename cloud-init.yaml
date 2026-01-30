@@ -20,12 +20,12 @@ write_files:
         valuesContent: |-
           additionalArguments:
             - "--certificatesresolvers.myresolver.acme.email={{ email }}"
-            - "--certificatesresolvers.myresolver.acme.storage=/data/traefik/acme.json"
+            - "--certificatesresolvers.myresolver.acme.storage=/mnt/data/traefik/acme.json"
             - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
             - "--certificatesresolvers.myresolver.acme.caserver={{ ca_server }}"
           volumes:
             - name: data-volume
-              mountPath: "/data"
+              mountPath: "/mnt/data"
               hostPath: "/data"
 
   # Reconfigure Local Path Provisioner to use /data/k3s-storage
@@ -49,13 +49,29 @@ write_files:
             ]
           }
 
-  # Create ArgoCD Namespace
-  - path: /var/lib/rancher/k3s/server/manifests/argocd-namespace.yaml
+  # Install ArgoCD via HelmChart
+  - path: /var/lib/rancher/k3s/server/manifests/argocd-helm.yaml
     content: |
-      apiVersion: v1
-      kind: Namespace
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
       metadata:
         name: argocd
+        namespace: kube-system
+      spec:
+        repo: https://argoproj.github.io/argo-helm
+        chart: argo-cd
+        targetNamespace: argocd
+        createNamespace: true
+        # Wait for the chart to be ready
+        valuesContent: |-
+          server:
+            extraArgs:
+              - --insecure # Optional: if you want to handle TLS at Traefik level easily
+
+  # Bootstrap ArgoCD Apps
+  - path: /var/lib/rancher/k3s/server/manifests/argocd-apps.yaml
+    content: |
+{{ argocd_apps }}
 
 runcmd:
   # Ensure the mount point exists (cloud-init mounts usually handle this, but for safety)
@@ -71,5 +87,3 @@ runcmd:
   # Install k3s
   - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.34.3+k3s1 sh -
 
-  # Download ArgoCD install manifest
-  - curl -L -o /var/lib/rancher/k3s/server/manifests/argocd-install.yaml https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
