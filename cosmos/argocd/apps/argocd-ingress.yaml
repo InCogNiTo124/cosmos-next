@@ -4,9 +4,9 @@ metadata:
   name: argocd-server-ingress
   namespace: argocd
   annotations:
-    # Use Traefik's cert resolver defined in cloud-init
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: "myresolver"
+    traefik.ingress.kubernetes.io/router.middlewares: argocd-redirect-https@kubernetescrd
 spec:
   rules:
   - host: argo.altair.space
@@ -23,3 +23,13 @@ spec:
   - hosts:
     - argo.altair.space
     secretName: argocd-server-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+  namespace: argocd
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
