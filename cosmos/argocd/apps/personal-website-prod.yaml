@@ -3,6 +3,10 @@ kind: Application
 metadata:
   name: personal-website-prod
   namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: personal-website=ghcr.io/incognito124/personal-website
+    argocd-image-updater.argoproj.io/personal-website.update-strategy: latest
+    argocd-image-updater.argoproj.io/write-back-method: git
 spec:
   project: default
   source:

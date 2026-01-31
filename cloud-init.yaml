@@ -71,7 +71,39 @@ write_files:
   # Bootstrap ArgoCD Apps
   - path: /var/lib/rancher/k3s/server/manifests/argocd-apps.yaml
     content: |
-{{ argocd_apps }}
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: root-app
+        namespace: argocd
+        finalizers:
+        - resources-finalizer.argocd.argoproj.io
+      spec:
+        project: default
+        source:
+          repoURL: https://github.com/InCogNiTo124/cosmos-next
+          targetRevision: HEAD
+          path: cosmos/argocd/apps
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: argocd
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+      ---
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: cosmos-next-repo
+        namespace: argocd
+        labels:
+          argocd.argoproj.io/secret-type: repository
+      stringData:
+        url: https://github.com/InCogNiTo124/cosmos-next
+        type: git
+        password: {{ gh_pat }}
+        username: git
 
 runcmd:
   # Ensure the mount point exists (cloud-init mounts usually handle this, but for safety)
