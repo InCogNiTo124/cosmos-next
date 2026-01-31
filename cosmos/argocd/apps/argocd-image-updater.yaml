@@ -17,6 +17,8 @@ spec:
               api_url: https://ghcr.io
               credentials: secret:argocd/ghcr-secret # We will need to create this later or use public if possible
         authScripts: []
+        extraArgs:
+          - --interval=1m
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

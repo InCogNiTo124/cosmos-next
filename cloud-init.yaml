@@ -75,6 +75,9 @@ write_files:
         createNamespace: true
         # Wait for the chart to be ready
         valuesContent: |-
+          configs:
+            cm:
+              timeout.reconciliation: "60s"
           server:
             extraArgs:
               - --insecure # Optional: if you want to handle TLS at Traefik level easily
