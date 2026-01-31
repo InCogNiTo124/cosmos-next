@@ -15,7 +15,7 @@ spec:
           registries:
             - name: GHCR
               api_url: https://ghcr.io
-              credentials: secret:argocd/ghcr-secret # We will need to create this later or use public if possible
+              credentials: secret:argocd/cosmos-next-repo
         authScripts: []
         extraArgs:
           - --interval=1m
