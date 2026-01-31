@@ -46,6 +46,15 @@ The cluster follows a recursive GitOps pattern (App of Apps) for zero-touch reco
 3.  **Authentication:** A GitHub PAT (Personal Access Token) is injected via `cloud-init` as a Kubernetes Secret. This allows ArgoCD to authenticate with the repository for both reading and writing (Image Updater).
 4.  **Self-Assembly:** As soon as ArgoCD is healthy, it applies the Root App, which then discovers and deploys all other applications defined in the repository.
 
+### Handling CRD Race Conditions (The "Chicken and Egg" Problem)
+A known limitation of the GitOps bootstrap process is the **CRD Race Condition**:
+- **Scenario:** The `root-app` attempts to deploy the `kube-prometheus-stack` (which installs the `ServiceMonitor` CRD) AND a custom `ServiceMonitor` resource (e.g., for Traefik) in the same sync operation.
+- **Problem:** ArgoCD performs a dry-run validation on all resources before applying. Since the `ServiceMonitor` CRD does not exist yet (the stack hasn't installed it), the validation fails for the custom resource, aborting the entire sync.
+- **Solution:** We explicitly configure the `root-app` with the sync option `SkipDryRunOnMissingResource=true`.
+    - **Mechanism:** ArgoCD skips the dry-run validation for resources whose CRDs are missing.
+    - **Outcome:** The sync proceeds, `kube-prometheus-stack` installs the CRDs, and the custom `ServiceMonitor` resource is applied successfully (either in the same pass or on the immediate next retry/self-heal cycle).
+    - **Expectation:** It is **expected** for the first sync attempt to show a transient error or warning regarding the missing CRD, which resolves itself automatically as the stack installs.
+
 ### Image Lifecycle (ArgoCD Image Updater)
 To achieve fully automated deployments, we utilize **ArgoCD Image Updater**:
 - **Monitoring:** It polls GHCR for new tags matching a specific strategy (e.g., `numeric` for Unix timestamps).

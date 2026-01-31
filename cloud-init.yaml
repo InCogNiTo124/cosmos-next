@@ -115,6 +115,8 @@ write_files:
           automated:
             prune: true
             selfHeal: true
+          syncOptions:
+            - SkipDryRunOnMissingResource=true
       ---
       apiVersion: v1
       kind: Secret
