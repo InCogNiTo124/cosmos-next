@@ -38,6 +38,16 @@ write_files:
             enabled: true
             path: /data
             storageClass: "local-path"
+          ports:
+            metrics:
+              port: 9100
+              expose:
+                default: true
+          metrics:
+            prometheus:
+              entryPoint: metrics
+              addEntryPointsLabels: true
+              addRoutersLabels: true
 
   # Reconfigure Local Path Provisioner to use /data/k3s-storage
   - path: /var/lib/rancher/k3s/server/manifests/local-path-storage.yaml

@@ -50,6 +50,36 @@ static_ip = hcloud.PrimaryIp(
     auto_delete=False,
 )
 
+# Create Firewall
+firewall = hcloud.Firewall(
+    "web-firewall",
+    rules=[
+        hcloud.FirewallRuleArgs(
+            direction="in",
+            protocol="tcp",
+            port="22",
+            source_ips=["0.0.0.0/0", "::/0"],
+        ),
+        hcloud.FirewallRuleArgs(
+            direction="in",
+            protocol="tcp",
+            port="80",
+            source_ips=["0.0.0.0/0", "::/0"],
+        ),
+        hcloud.FirewallRuleArgs(
+            direction="in",
+            protocol="tcp",
+            port="443",
+            source_ips=["0.0.0.0/0", "::/0"],
+        ),
+        hcloud.FirewallRuleArgs(
+            direction="in",
+            protocol="icmp",
+            source_ips=["0.0.0.0/0", "::/0"],
+        ),
+    ],
+)
+
 # 3. Define server
 test_server = hcloud.Server(
     "test-server",
@@ -59,6 +89,7 @@ test_server = hcloud.Server(
             ipv4_enabled=True, ipv4=static_ip.id, ipv6_enabled=False
         )
     ],
+    firewall_ids=[firewall.id],
     ssh_keys=[ssh_key.id],
     server_type="cx33",
     image="ubuntu-24.04",

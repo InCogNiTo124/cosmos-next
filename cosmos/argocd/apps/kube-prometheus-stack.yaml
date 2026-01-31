@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 65.2.0
+    helm:
+      values: |
+        grafana:
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hosts:
+              - grafana.altair.space
+            paths:
+              - /
+            annotations:
+              traefik.ingress.kubernetes.io/router.tls: "true"
+              traefik.ingress.kubernetes.io/router.tls.certresolver: "myresolver"
+              traefik.ingress.kubernetes.io/router.middlewares: "argocd-redirect-https@kubernetescrd"
+          persistence:
+            enabled: true
+            type: pvc
+            storageClassName: local-path
+            accessModes:
+              - ReadWriteOnce
+            size: 10Gi
+          dashboardProviders:
+            dashboardproviders.yaml:
+              apiVersion: 1
+              providers:
+              - name: 'default'
+                orgId: 1
+                folder: ''
+                type: file
+                disableDeletion: false
+                editable: true
+                options:
+                  path: /var/lib/grafana/dashboards/default
+          dashboards:
+            default:
+              traefik-dashboard:
+                gnetId: 17347
+                revision: 1
+                datasource: Prometheus
+
+        prometheus:
+          prometheusSpec:
+            scrapeInterval: 15s
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: local-path
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 50Gi
+            retention: 30d
+            # Allow Prometheus to scrape Traefik (if needed)
+            serviceMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelector: {}
+            serviceMonitorNamespaceSelector: {}
+
+        # Disable Alertmanager Ingress for now (access via port-forward if needed)
+        alertmanager:
+          ingress:
+            enabled: false
+          alertmanagerSpec:
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: local-path
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 5Gi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true # Needed for large CRDs
