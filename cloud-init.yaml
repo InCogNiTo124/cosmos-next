@@ -8,7 +8,7 @@ write_files:
     content: |-
       KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-  # Configure Traefik to use the persistent volume for ACME
+  # Configure Traefik to use the persistent volume for ACME with proper permissions
   - path: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
     content: |
       apiVersion: helm.cattle.io/v1
@@ -20,13 +20,24 @@ write_files:
         valuesContent: |-
           additionalArguments:
             - "--certificatesresolvers.myresolver.acme.email={email}"
-            - "--certificatesresolvers.myresolver.acme.storage=/mnt/data/traefik/acme.json"
+            - "--certificatesresolvers.myresolver.acme.storage=/data/acme.json"
             - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
             - "--certificatesresolvers.myresolver.acme.caserver={ca_server}"
-          volumes:
-            - name: data-volume
-              mountPath: "/mnt/data"
-              hostPath: "/data"
+          deployment:
+            initContainers:
+              - name: volume-permission
+                image: busybox:latest
+                command:
+                  - sh
+                  - -c
+                  - touch /data/acme.json; chmod -v 600 /data/acme.json
+                volumeMounts:
+                  - mountPath: /data
+                    name: data
+          persistence:
+            enabled: true
+            path: /data
+            storageClass: "local-path"
 
   # Reconfigure Local Path Provisioner to use /data/k3s-storage
   - path: /var/lib/rancher/k3s/server/manifests/local-path-storage.yaml
@@ -106,7 +117,7 @@ write_files:
         username: git
 
 runcmd:
-  # Ensure the mount point exists (cloud-init mounts usually handle this, but for safety)
+  # Ensure the mount point exists
   - mkdir -p /data
   
   # Ensure subdirectories exist
