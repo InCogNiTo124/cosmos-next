@@ -25,14 +25,13 @@ def create_cloud_init(vol_id):
     with pathlib.Path("cloud-init.yaml").open() as file:
         template = file.read()
     
-    # Read all ArgoCD application manifests
+    # Read the Root App manifest
     apps_content = ""
-    argocd_dir = pathlib.Path("cosmos/argocd")
-    if argocd_dir.exists():
-        for app_file in argocd_dir.glob("*.yaml"):
-            with app_file.open() as f:
-                apps_content += f"\n---\n# Source: {app_file.name}\n"
-                apps_content += f.read()
+    root_app_path = pathlib.Path("cosmos/argocd/root.yaml")
+    if root_app_path.exists():
+        with root_app_path.open() as f:
+            apps_content += f"\n---\n# Source: {root_app_path.name}\n"
+            apps_content += f.read()
 
     # Indent the content to match YAML structure (6 spaces)
     indented_apps = "\n".join([f"      {line}" if line.strip() else line for line in apps_content.splitlines()])
