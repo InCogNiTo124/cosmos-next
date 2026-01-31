@@ -27,13 +27,13 @@ volume = hcloud.Volume(
 def create_cloud_init(vol_id):
     with pathlib.Path("cloud-init.yaml").open() as file:
         template = file.read()
-
+    
     # We inject the specific Volume ID for the /dev/disk/by-id path
-    return (
-        template.replace("{{ volume_id }}", str(vol_id))
-        .replace("{{ email }}", "msmetko@msmetko.xyz")
-        .replace("{{ ca_server }}", LetsEncryptEnv.STAGING.value)
-        .replace("{{ gh_pat }}", os.environ.get("GH_PAT", ""))
+    return template.format(
+        volume_id=vol_id,
+        email="msmetko@msmetko.xyz",
+        ca_server=LetsEncryptEnv.STAGING.value,
+        gh_pat=os.environ.get("GH_PAT", "")
     )
 
 

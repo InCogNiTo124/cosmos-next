@@ -1,7 +1,7 @@
 #cloud-config
 
 mounts:
-  - [ "/dev/disk/by-id/scsi-0HC_Volume_{{ volume_id }}", "/data", "ext4", "discard,defaults", "0", "2" ]
+  - [ "/dev/disk/by-id/scsi-0HC_Volume_{volume_id}", "/data", "ext4", "discard,defaults", "0", "2" ]
 
 write_files:
   - path: /etc/environment
@@ -19,10 +19,10 @@ write_files:
       spec:
         valuesContent: |-
           additionalArguments:
-            - "--certificatesresolvers.myresolver.acme.email={{ email }}"
+            - "--certificatesresolvers.myresolver.acme.email={email}"
             - "--certificatesresolvers.myresolver.acme.storage=/mnt/data/traefik/acme.json"
             - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-            - "--certificatesresolvers.myresolver.acme.caserver={{ ca_server }}"
+            - "--certificatesresolvers.myresolver.acme.caserver={ca_server}"
           volumes:
             - name: data-volume
               mountPath: "/mnt/data"
@@ -38,16 +38,16 @@ write_files:
         namespace: kube-system
       data:
         config.json: |-
-          {
+          {{
             "nodePathMap": [
-              {
+              {{
                 "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
                 "paths": [
                   "/data/k3s-storage"
                 ]
-              }
+              }}
             ]
-          }
+          }}
 
   # Install ArgoCD via HelmChart
   - path: /var/lib/rancher/k3s/server/manifests/argocd-helm.yaml
@@ -102,7 +102,7 @@ write_files:
       stringData:
         url: https://github.com/InCogNiTo124/cosmos-next
         type: git
-        password: {{ gh_pat }}
+        password: {gh_pat}
         username: git
 
 runcmd:
@@ -118,4 +118,3 @@ runcmd:
   
   # Install k3s
   - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.34.3+k3s1 sh -
-
