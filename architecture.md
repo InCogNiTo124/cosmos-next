@@ -39,27 +39,37 @@ To prevent data corruption on the persistent volume, we enforce a strict teardow
 
 ## GitOps & Bootstrapping
 
-### The "Zero-Touch" Recovery
-The cluster is designed to be fully self-healing from a "blank slate" (Pulumi Up):
-1.  **ArgoCD Installation:** Installed automatically via the K3s Helm Controller (`HelmChart` manifest).
-2.  **App Injection:** Local ArgoCD `Application` manifests are read by Pulumi and injected via `cloud-init` into the K3s auto-deploy manifests directory.
-3.  **Synchronization:** As soon as ArgoCD is healthy, it detects the injected application manifests and begins syncing the state from the GitHub repository.
+### The "App of Apps" Bootstrap
+The cluster follows a recursive GitOps pattern (App of Apps) for zero-touch recovery:
+1.  **ArgoCD Installation:** Installed via K3s Helm Controller.
+2.  **Root Application:** A single "Root" `Application` manifest is inlined into `cloud-init`. This manifest points to the `cosmos/argocd/apps` directory in Git.
+3.  **Authentication:** A GitHub PAT (Personal Access Token) is injected via `cloud-init` as a Kubernetes Secret. This allows ArgoCD to authenticate with the repository for both reading and writing (Image Updater).
+4.  **Self-Assembly:** As soon as ArgoCD is healthy, it applies the Root App, which then discovers and deploys all other applications defined in the repository.
+
+### Image Lifecycle (ArgoCD Image Updater)
+To achieve fully automated deployments, we utilize **ArgoCD Image Updater**:
+- **Monitoring:** It polls GHCR for new tags matching a specific strategy (e.g., `numeric` for Unix timestamps).
+- **Automation:** When a newer image is detected, it automatically updates the Kubernetes manifest.
+- **Write-back:** It commits the new image tag directly back to the Git repository, ensuring the source of truth is always up to date.
 
 ## Design Decisions
 
 ### Why not Cert-Manager?
 Traefik's file-based approach coupled with our persistent volume is simpler and more robust for this specific single-node architecture. It avoids the need for complex etcd/sqlite database backup/restore logic to preserve certificates.
 
-### Why Public Repo?
-Using a public repository simplifies the ArgoCD bootstrap process by removing the need for SSH key management or credential secrets during the initial "cloud-init" phase, while still allowing for full GitOps automation.
+### Why GitHub PAT over SSH?
+Using a GitHub PAT for repository authentication is simpler to manage in both local and CI environments. It provides a unified credential for both GitOps (ArgoCD) and Image Lifecycle management (Image Updater write-back) without the overhead of SSH key management.
 
 ## Future Optimizations (Ideas)
 
-1.  **Pre-baked Image (Packer):**
+1.  **ArgoCD UI Exposure (Completed):**
+    - Expose the ArgoCD dashboard via Ingress with automatic HTTP-to-HTTPS redirection.
+
+2.  **Pre-baked Image (Packer):**
     - **Concept:** Pre-install K3s, Helm, and ArgoCD binaries/images into a custom Hetzner snapshot.
     - **Benefit:** Drastically reduces bootstrap time (no downloads/installs on boot). Server comes up "ready".
 
-2.  **K3s Airgap / Pre-loading:**
+3.  **K3s Airgap / Pre-loading:**
     - **Concept:** Host K3s binaries and airgap image archives on the persistent volume or upload them via Pulumi during provisioning.
     - **Benefit:** Removes dependency on external internet speed/availability for the K3s installation phase.
 
