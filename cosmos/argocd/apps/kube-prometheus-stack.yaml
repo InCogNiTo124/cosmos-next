@@ -63,6 +63,14 @@ spec:
             serviceMonitorSelectorNilUsesHelmValues: false
             serviceMonitorSelector: {}
             serviceMonitorNamespaceSelector: {}
+            volumes:
+              - name: prometheus-data
+                hostPath:
+                  path: /data/prometheus
+                  type: Directory
+            volumeMounts:
+              - name: prometheus-data
+                mountPath: /prometheus
           additionalServiceMonitors:
             - name: traefik
               selector:
@@ -80,6 +88,15 @@ spec:
         alertmanager:
           ingress:
             enabled: false
+          alertmanagerSpec:
+            volumes:
+              - name: alertmanager-data
+                hostPath:
+                  path: /data/alertmanager
+                  type: Directory
+            volumeMounts:
+              - name: alertmanager-data
+                mountPath: /alertmanager
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
