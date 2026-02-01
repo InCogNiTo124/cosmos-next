@@ -1,21 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: personal-website-prod
+  name: brachi
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/image-list: personal-website=ghcr.io/incognito124/personal-website
-    argocd-image-updater.argoproj.io/personal-website.update-strategy: numeric
+    argocd-image-updater.argoproj.io/image-list: brachi=ghcr.io/incognito124/brachi
+    argocd-image-updater.argoproj.io/brachi.update-strategy: numeric
     argocd-image-updater.argoproj.io/write-back-method: git
 spec:
   project: default
   source:
     repoURL: https://github.com/InCogNiTo124/cosmos-next
     targetRevision: HEAD
-    path: cosmos/overlays/prod
+    path: cosmos/apps/brachi
   destination:
     server: https://kubernetes.default.svc
-    namespace: personal-website
+    namespace: brachi
   syncPolicy:
     automated:
       prune: true

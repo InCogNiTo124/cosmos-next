@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kepler-orbit
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kepler-orbit
+  namespace: kepler-orbit
+spec:
+  ports:
+    - name: web
+      port: 80
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app: kepler-orbit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kepler-orbit
+  namespace: kepler-orbit
+  labels:
+    app: kepler-orbit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kepler-orbit
+  template:
+    metadata:
+      labels:
+        app: kepler-orbit
+    spec:
+      containers:
+        - name: kepler-orbit
+          image: ghcr.io/incognito124/kepler-orbit:1767736178
+          ports:
+            - name: web
+              containerPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kepler-orbit
+  namespace: kepler-orbit
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
+    traefik.ingress.kubernetes.io/router.middlewares: "argocd-redirect-https@kubernetescrd"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: orbit.msmetko.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kepler-orbit
+                port:
+                  number: 80

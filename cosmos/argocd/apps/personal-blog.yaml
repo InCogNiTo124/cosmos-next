@@ -1,21 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: personal-website-prod
+  name: personal-blog
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/image-list: personal-website=ghcr.io/incognito124/personal-website
-    argocd-image-updater.argoproj.io/personal-website.update-strategy: numeric
+    argocd-image-updater.argoproj.io/image-list: blog=ghcr.io/incognito124/personal-blog-frontend, blog-db=ghcr.io/incognito124/personal-blog-database
+    argocd-image-updater.argoproj.io/blog.update-strategy: numeric
+    argocd-image-updater.argoproj.io/blog-db.update-strategy: numeric
     argocd-image-updater.argoproj.io/write-back-method: git
 spec:
   project: default
   source:
     repoURL: https://github.com/InCogNiTo124/cosmos-next
     targetRevision: HEAD
-    path: cosmos/overlays/prod
+    path: cosmos/apps/personal-blog
   destination:
     server: https://kubernetes.default.svc
-    namespace: personal-website
+    namespace: personal-blog
   syncPolicy:
     automated:
       prune: true
