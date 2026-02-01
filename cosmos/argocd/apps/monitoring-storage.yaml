@@ -71,3 +71,28 @@ spec:
   hostPath:
     path: /data/alertmanager
   storageClassName: manual
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fix-monitoring-permissions
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "echo 'Fixing permissions...'; chown -R 1000:1000 /data/prometheus /data/alertmanager /data/grafana; chmod -R 777 /data/prometheus /data/alertmanager /data/grafana; echo 'Done.'"]
+        volumeMounts:
+        - name: data-root
+          mountPath: /data
+      restartPolicy: OnFailure
+      volumes:
+      - name: data-root
+        hostPath:
+          path: /data
+          type: Directory

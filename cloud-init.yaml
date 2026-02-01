@@ -147,11 +147,17 @@ runcmd:
     echo "$DEVICE $MOUNT_POINT ext4 discard,defaults 0 2" >> /etc/fstab
   
   # Ensure subdirectories exist on the mounted volume
-  - mkdir -p -m 0755 /data/traefik
-  - mkdir -p -m 0755 /data/k3s-storage
-  - mkdir -p -m 0777 /data/prometheus
-  - mkdir -p -m 0777 /data/grafana
-  - mkdir -p -m 0777 /data/alertmanager
+  - mkdir -p /data/traefik
+  - mkdir -p /data/k3s-storage
+  - mkdir -p /data/prometheus
+  - mkdir -p /data/grafana
+  - mkdir -p /data/alertmanager
+  # Explicitly set permissions (mkdir -p -m only affects NEW directories)
+  - chmod 755 /data/traefik
+  - chmod 755 /data/k3s-storage
+  - chmod 777 /data/prometheus
+  - chmod 777 /data/grafana
+  - chmod 777 /data/alertmanager
 
   # Install k9s
   - wget https://github.com/derailed/k9s/releases/download/v0.50.16/k9s_Linux_amd64.tar.gz && tar -xzvf k9s_Linux_amd64.tar.gz && mv k9s /usr/local/bin/ && rm k9s_Linux_amd64.tar.gz
