@@ -61,6 +61,7 @@ spec:
             storageSpec:
               volumeClaimTemplate:
                 spec:
+                  storageClassName: manual
                   volumeName: prometheus-data-pv
                   accessModes: ["ReadWriteOnce"]
                   resources:
@@ -92,6 +93,7 @@ spec:
             storage:
               volumeClaimTemplate:
                 spec:
+                  storageClassName: manual
                   volumeName: alertmanager-data-pv
                   accessModes: ["ReadWriteOnce"]
                   resources:
