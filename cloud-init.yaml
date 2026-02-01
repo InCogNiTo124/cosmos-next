@@ -40,10 +40,13 @@ write_files:
                 volumeMounts:
                   - mountPath: /data
                     name: data
-          persistence:
-            enabled: true
-            path: /data
-            storageClass: "local-path"
+          volumes:
+            - name: data
+              hostPath:
+                path: /data
+          additionalVolumeMounts:
+            - name: data
+              mountPath: /data
           ports:
             metrics:
               port: 9101
@@ -55,27 +58,6 @@ write_files:
               entryPoint: metrics
               addEntryPointsLabels: true
               addRoutersLabels: true
-
-  # Reconfigure Local Path Provisioner to use /data/k3s-storage
-  - path: /var/lib/rancher/k3s/server/manifests/local-path-storage.yaml
-    content: |
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: local-path-config
-        namespace: kube-system
-      data:
-        config.json: |-
-          {{
-            "nodePathMap": [
-              {{
-                "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
-                "paths": [
-                  "/data/k3s-storage"
-                ]
-              }}
-            ]
-          }}
 
   # Install ArgoCD via HelmChart
   - path: /var/lib/rancher/k3s/server/manifests/argocd-helm.yaml
@@ -170,4 +152,4 @@ runcmd:
   - wget https://github.com/derailed/k9s/releases/download/v0.50.16/k9s_Linux_amd64.tar.gz && tar -xzvf k9s_Linux_amd64.tar.gz && mv k9s /usr/local/bin/ && rm k9s_Linux_amd64.tar.gz
   
   # Install k3s (Only after volume is ready)
-  - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.34.3+k3s1 sh -
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.34.3+k3s1 sh -s - server --default-local-storage-path /data/k3s-storage
