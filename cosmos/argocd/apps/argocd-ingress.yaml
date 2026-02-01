@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   annotations:
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.certresolver: "myresolver"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: "letsencrypt"
     traefik.ingress.kubernetes.io/router.middlewares: argocd-redirect-https@kubernetescrd
 spec:
   rules:

@@ -28,10 +28,10 @@ write_files:
       spec:
         valuesContent: |-
           additionalArguments:
-            - "--certificatesresolvers.myresolver.acme.email={email}"
-            - "--certificatesresolvers.myresolver.acme.storage=/data/acme.json"
-            - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-            - "--certificatesresolvers.myresolver.acme.caserver={ca_server}"
+            - "--certificatesresolvers.letsencrypt.acme.email={email}"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+            - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+            - "--certificatesresolvers.letsencrypt.acme.caserver={ca_server}"
           deployment:
             initContainers:
               - name: volume-permission
