@@ -61,6 +61,22 @@ To achieve fully automated deployments, we utilize **ArgoCD Image Updater**:
 - **Automation:** When a newer image is detected, it automatically updates the Kubernetes manifest.
 - **Write-back:** It commits the new image tag directly back to the Git repository, ensuring the source of truth is always up to date.
 
+## Monitoring Architecture
+
+### The "Port 9100" Conflict (Traefik vs. Node Exporter)
+A specific conflict exists in the K3s ecosystem when enabling metrics:
+1.  **Node Exporter:** Runs as a DaemonSet with `hostNetwork: true`. It binds to **port 9100** on the host to export hardware metrics.
+2.  **Traefik:** Runs as a Service with type `LoadBalancer` (via Klipper ServiceLB). If configured with default metrics settings, it *also* attempts to listen on **port 9100** on the host interface.
+3.  **Conflict:** Since two processes cannot bind to the same host port, Node Exporter fails to schedule (Pending state) if Traefik starts first.
+
+**Resolution:**
+We explicitly configure Traefik to expose metrics on **port 9101** (both in the container arguments and the Service definition).
+- **Container:** `--entryPoints.metrics.address=:9101/tcp`
+- **Service:** `port: 9101` mapping to `targetPort: metrics`
+
+**Security:**
+Both ports 9100 (Node Exporter) and 9101 (Traefik Metrics) are blocked from the public internet via the Hetzner Cloud Firewall, ensuring metrics are only accessible internally by the Prometheus scraper.
+
 ## Design Decisions
 
 ### Why not Cert-Manager?
