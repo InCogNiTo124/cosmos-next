@@ -18,9 +18,13 @@ Instead of creating many small cloud volumes, we attach one large 50GB volume to
     - We utilize the K3s bundled `local-path-provisioner`.
     - We configure this provisioner to store data in `/data/k3s-storage` instead of the ephemeral OS disk.
 
-#### Decision: Default Persistence
-We explicitly reconfigured the **default** `local-path` storage class to use the persistent volume (`/data`).
-- **Reasoning:** In this single-node setup, accidental data loss is a higher risk than storage clutter. Ephemeral needs use `emptyDir`.
+#### Monitoring Persistence (Prometheus & Alertmanager)
+For the Prometheus Operator stack, we use a **Static HostPath Binding** strategy to ensure data survives nuclear rebuilds (node replacement).
+- **Challenge:** The Operator typically manages volume claims dynamically or defaults to `emptyDir` if not configured. Using simple `hostPath` overrides in Helm values often conflicts with the Operator's logic.
+- **Solution (Selector Binding):**
+    1.  **Static PVs:** We pre-create `PersistentVolume` resources pointing to specific host paths (`/data/prometheus`, `/data/alertmanager`) with `storageClassName: manual` and specific labels (e.g., `app: prometheus`).
+    2.  **Selector Matching:** We configure the `storageSpec` in the Prometheus/Alertmanager CRD values to use a `volumeClaimTemplate` with a `selector`. This selector matches the labels of our Static PVs.
+    3.  **Result:** When the StatefulSet is created, it generates a PVC that automatically binds to our pre-existing Static PV (and thus the underlying host path), bypassing dynamic provisioning while satisfying the Operator's requirements.
 
 ### SSL/TLS Strategy (Traefik Native)
 To prevent Let's Encrypt rate limits during instance swaps:
