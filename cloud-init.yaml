@@ -26,7 +26,7 @@ write_files:
         valuesContent: |-
           additionalArguments:
             - "--certificatesresolvers.letsencrypt.acme.email={email}"
-            - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/traefik-acme/acme.json"
             - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
             - "--certificatesresolvers.letsencrypt.acme.caserver={ca_server}"
           deployment:
@@ -36,14 +36,17 @@ write_files:
                 command:
                   - sh
                   - -c
-                  - touch /data/acme.json; chmod -v 600 /data/acme.json
+                  - touch /traefik-acme/acme.json; chmod -v 600 /traefik-acme/acme.json
                 volumeMounts:
-                  - mountPath: /data
-                    name: traefik-storage
-          persistence:
-            enabled: true
-            path: /data/traefik
-            name: traefik-storage
+                  - mountPath: /traefik-acme
+                    name: acme-storage
+          volumes:
+            - name: acme-storage
+              hostPath:
+                path: /data/traefik
+          additionalVolumeMounts:
+            - name: acme-storage
+              mountPath: /traefik-acme
           ports:
             metrics:
               port: 9101
@@ -144,6 +147,9 @@ runcmd:
   # Ensure subdirectories exist on the mounted volume
   - mkdir -p -m 0755 /data/traefik
   - mkdir -p -m 0755 /data/k3s-storage
+  - mkdir -p -m 0777 /data/prometheus
+  - mkdir -p -m 0777 /data/grafana
+  - mkdir -p -m 0777 /data/alertmanager
 
   # Install k9s
   - wget https://github.com/derailed/k9s/releases/download/v0.50.16/k9s_Linux_amd64.tar.gz && tar -xzvf k9s_Linux_amd64.tar.gz && mv k9s /usr/local/bin/ && rm k9s_Linux_amd64.tar.gz
