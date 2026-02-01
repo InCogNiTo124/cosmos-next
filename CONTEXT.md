@@ -45,14 +45,13 @@ This document serves as a "state of the world" summary for the `cosmos-next` pro
     *   `personal-website-prod.yaml`: Production application manifest.
     *   `root.yaml`: (Legacy/Reference) The root application definition (now inlined in cloud-init).
 
-## 5. Recent Changes (Jan 31, 2026)
-1.  **Refactored Templating:** Switched `__main__.py` to use Python's `.format()` for cleaner variable injection.
-2.  **Traefik Fixes:** Added `busybox` initContainer to `cloud-init.yaml` to fix `/data/acme.json` permission issues (chmod 600).
-3.  **UI Exposure:** Exposed ArgoCD at `https://argo.altair.space` with auto-redirect.
-4.  **Optimization:** Reduced ArgoCD and Image Updater polling intervals to **1 minute**.
-5.  **Documentation:** Updated `architecture.md` to reflect the current GitOps bootstrap process.
+## 5. Recent Changes (Feb 1, 2026)
+1.  **Monitoring stack finalized**: Deployed Grafana, Prometheus, and Traefik metrics on port 9101.
+2.  **K9s Config**: Added minimal configuration to show all namespaces by default.
+3.  **Critical Bug Found**: Discovered that `/data` volume was NOT mounting via cloud-init `mounts` (failing silently). All data was being written to the ephemeral root disk.
 
 ## 6. Next Steps / TODOs
-*   [ ] **Switch to Production LE:** Change `LetsEncryptEnv.STAGING` to `LetsEncryptEnv.PRODUCTION` in `__main__.py`.
-*   [ ] **CI/CD Pipeline:** Implement GitHub Actions to run `pulumi up` on merge to main.
-*   [ ] **Secret Management:** Consider replacing inlined secrets with SealedSecrets or ExternalSecrets for better security hygiene (though current env var injection is functional).
+*   [ ] **Fix Persistence**: Move mounting logic to `runcmd` with a retry/wait loop to ensure the block device is ready before K3s starts.
+*   [ ] **Switch to Production LE**: Change `LetsEncryptEnv.STAGING` to `LetsEncryptEnv.PRODUCTION` in `__main__.py`.
+*   [ ] **CI/CD Pipeline**: Implement GitHub Actions to run `pulumi up`.
+
