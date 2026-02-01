@@ -20,6 +20,7 @@ volume = hcloud.Volume(
     size=50,
     format="ext4",
     location="fsn1",
+    opts=pulumi.ResourceOptions(protect=True),
 )
 
 

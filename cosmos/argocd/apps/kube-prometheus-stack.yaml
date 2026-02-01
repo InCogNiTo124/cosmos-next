@@ -63,14 +63,18 @@ spec:
             serviceMonitorSelectorNilUsesHelmValues: false
             serviceMonitorSelector: {}
             serviceMonitorNamespaceSelector: {}
-            volumes:
-              - name: prometheus-data
-                hostPath:
-                  path: /data/prometheus
-                  type: Directory
-            volumeMounts:
-              - name: prometheus-data
-                mountPath: /prometheus
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: manual
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 50Gi
+                  selector:
+                    matchLabels:
+                      app: prometheus
+                      storage-tier: monitoring
           additionalServiceMonitors:
             - name: traefik
               selector:
@@ -89,14 +93,18 @@ spec:
           ingress:
             enabled: false
           alertmanagerSpec:
-            volumes:
-              - name: alertmanager-data
-                hostPath:
-                  path: /data/alertmanager
-                  type: Directory
-            volumeMounts:
-              - name: alertmanager-data
-                mountPath: /alertmanager
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: manual
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 5Gi
+                  selector:
+                    matchLabels:
+                      app: alertmanager
+                      storage-tier: monitoring
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
