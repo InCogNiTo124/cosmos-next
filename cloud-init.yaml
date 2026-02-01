@@ -26,7 +26,7 @@ write_files:
         valuesContent: |-
           additionalArguments:
             - "--certificatesresolvers.letsencrypt.acme.email={email}"
-            - "--certificatesresolvers.letsencrypt.acme.storage=/traefik-acme/acme.json"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
             - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
             - "--certificatesresolvers.letsencrypt.acme.caserver={ca_server}"
           deployment:
@@ -36,17 +36,19 @@ write_files:
                 command:
                   - sh
                   - -c
-                  - touch /traefik-acme/acme.json; chmod -v 600 /traefik-acme/acme.json
+                  - touch /data/acme.json; chmod -v 600 /data/acme.json
                 volumeMounts:
-                  - mountPath: /traefik-acme
-                    name: acme-storage
-          volumes:
-            - name: acme-storage
-              hostPath:
-                path: /data/traefik
-          additionalVolumeMounts:
-            - name: acme-storage
-              mountPath: /traefik-acme
+                  - mountPath: /data
+                    name: acme-data
+            additionalVolumes:
+              - name: acme-data
+                hostPath:
+                  path: /data/traefik
+            additionalVolumeMounts:
+              - name: acme-data
+                mountPath: /data
+          persistence:
+            enabled: false
           ports:
             metrics:
               port: 9101
