@@ -8,6 +8,15 @@ write_files:
     content: |-
       KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
+  # Configure k9s to show all namespaces by default
+  - path: /root/.config/k9s/config.yaml
+    content: |
+      k9s:
+        clusters:
+          default:
+            namespace:
+              active: all
+  
   # Configure Traefik to use the persistent volume for ACME with proper permissions
   - path: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
     content: |
