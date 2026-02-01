@@ -58,15 +58,6 @@ spec:
         prometheus:
           prometheusSpec:
             scrapeInterval: 15s
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: manual
-                  volumeName: prometheus-data-pv
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: 50Gi
             retention: 30d
             # Allow Prometheus to scrape Traefik (if needed)
             serviceMonitorSelectorNilUsesHelmValues: false
@@ -89,16 +80,6 @@ spec:
         alertmanager:
           ingress:
             enabled: false
-          alertmanagerSpec:
-            storage:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: manual
-                  volumeName: alertmanager-data-pv
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: 5Gi
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

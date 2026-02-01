@@ -18,6 +18,20 @@ spec:
   storageClassName: manual
 ---
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-kube-prometheus-stack-prometheus-db-prometheus-kube-prometheus-stack-prometheus-0
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: manual
+  volumeName: prometheus-data-pv
+---
+apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: grafana-data-pv
@@ -58,3 +72,17 @@ spec:
   hostPath:
     path: /data/alertmanager
   storageClassName: manual
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-kube-prometheus-stack-alertmanager-db-alertmanager-kube-prometheus-stack-alertmanager-0
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: manual
+  volumeName: alertmanager-data-pv
