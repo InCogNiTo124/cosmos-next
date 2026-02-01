@@ -40,7 +40,7 @@ write_files:
             storageClass: "local-path"
           ports:
             metrics:
-              port: 9100
+              port: 9101
               expose:
                 default: true
           metrics:
