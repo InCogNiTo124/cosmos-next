@@ -1,8 +1,5 @@
 #cloud-config
 
-mounts:
-  - [ "/dev/disk/by-id/scsi-0HC_Volume_{volume_id}", "/data", "ext4", "discard,defaults", "0", "2" ]
-
 write_files:
   - path: /etc/environment
     content: |-
@@ -141,15 +138,35 @@ write_files:
         username: git
 
 runcmd:
-  # Ensure the mount point exists
-  - mkdir -p /data
+  # Robust volume mounting logic
+  - |
+    DEVICE="/dev/disk/by-id/scsi-0HC_Volume_{volume_id}"
+    MOUNT_POINT="/data"
+    
+    echo "Waiting for device $DEVICE to appear..."
+    while [ ! -b "$DEVICE" ]; do
+      sleep 1
+    done
+    
+    echo "Device $DEVICE found. Checking filesystem..."
+    if ! blkid "$DEVICE"; then
+      echo "No filesystem found on $DEVICE. Formatting as ext4..."
+      mkfs.ext4 -F "$DEVICE"
+    fi
+    
+    echo "Mounting $DEVICE to $MOUNT_POINT..."
+    mkdir -p "$MOUNT_POINT"
+    mount -o discard,defaults "$DEVICE" "$MOUNT_POINT"
+    
+    echo "Adding $DEVICE to /etc/fstab..."
+    echo "$DEVICE $MOUNT_POINT ext4 discard,defaults 0 2" >> /etc/fstab
   
-  # Ensure subdirectories exist
+  # Ensure subdirectories exist on the mounted volume
   - mkdir -p -m 0755 /data/traefik
   - mkdir -p -m 0755 /data/k3s-storage
 
   # Install k9s
   - wget https://github.com/derailed/k9s/releases/download/v0.50.16/k9s_Linux_amd64.tar.gz && tar -xzvf k9s_Linux_amd64.tar.gz && mv k9s /usr/local/bin/ && rm k9s_Linux_amd64.tar.gz
   
-  # Install k3s
+  # Install k3s (Only after volume is ready)
   - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.34.3+k3s1 sh -
