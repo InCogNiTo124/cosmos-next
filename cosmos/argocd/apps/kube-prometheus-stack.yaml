@@ -46,8 +46,12 @@ spec:
                   path: /var/lib/grafana/dashboards/default
           dashboards:
             default:
-              traefik-dashboard:
+              traefik-official:
                 gnetId: 17347
+                revision: 1
+                datasource: Prometheus
+              traefik-v2:
+                gnetId: 11462
                 revision: 1
                 datasource: Prometheus
 
