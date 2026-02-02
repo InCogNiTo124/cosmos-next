@@ -13,6 +13,37 @@ write_files:
           default:
             namespace:
               active: all
+
+  # Create Static PV/PVC for Traefik ACME storage to ensure it uses the persistent volume
+  - path: /var/lib/rancher/k3s/server/manifests/traefik-storage.yaml
+    content: |
+      apiVersion: v1
+      kind: PersistentVolume
+      metadata:
+        name: traefik-acme-pv
+        labels:
+          type: local
+      spec:
+        storageClassName: manual
+        capacity:
+          storage: 100Mi
+        accessModes:
+          - ReadWriteOnce
+        hostPath:
+          path: /data/traefik
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: traefik-acme-pvc
+        namespace: kube-system
+      spec:
+        storageClassName: manual
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
   
   # Configure Traefik to use the persistent volume for ACME with proper permissions
   - path: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
@@ -33,19 +64,15 @@ write_files:
             - "--accesslog=true"
           persistence:
             enabled: true
-            storageClassName: ""
-            existingClaim: ""
+            existingClaim: traefik-acme-pvc
             mountPath: /data/traefik
-            accessMode: ReadWriteOnce
-            size: 1Mi
-            hostPath: /data/traefik
           initContainers:
             - name: volume-permission
               image: busybox:latest
               command:
                 - sh
                 - -c
-                - mkdir -p /data/traefik; chmod -v 755 /data/traefik
+                - mkdir -p /data/traefik; chmod -v 755 /data/traefik; chown -R 65532:65532 /data/traefik
               volumeMounts:
                 - mountPath: /data/traefik
                   name: data
