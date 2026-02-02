@@ -51,8 +51,11 @@ write_files:
                   name: data
           ports:
             web:
-              redirectTo:
-                port: websecure
+              redirections:
+                entryPoint:
+                  to: websecure
+                  scheme: https
+                  permanent: true
             metrics:
               port: 9101
               exposedPort: 9101
