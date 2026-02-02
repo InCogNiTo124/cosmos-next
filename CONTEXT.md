@@ -2,7 +2,7 @@
 
 This document serves as a "state of the world" summary for the `cosmos-next` project, intended to help developers (and AI assistants) quickly understand the current infrastructure, configuration, and recent changes.
 
-**Last Updated:** 2026-01-31
+**Last Updated:** 2026-02-02
 
 ## 1. Project Identity
 *   **Name:** `cosmos-next`
@@ -16,12 +16,13 @@ This document serves as a "state of the world" summary for the `cosmos-next` pro
     *   **SSH Access:** Key `ARIES` (private key injected via env var).
 *   **Persistence:**
     *   **Volume:** 50GB Block Storage (`data-volume`).
-    *   **Mount Point:** `/data` (mounted via `cloud-init`, avoiding automount).
-    *   **Storage Class:** `local-path` reconfigured to use `/data/k3s-storage`.
+    *   **Mount Point:** `/data` (mounted via `runcmd` with robust wait loop).
+    *   **Storage Class:** `local-path` (default) but critical applications use **Static PVs** bound to `/data/...` hostPaths.
 *   **Networking:**
-    *   **Ingress Controller:** Traefik (bundled with K3s).
-    *   **TLS/ACME:** Let's Encrypt **Staging** (via Traefik `myresolver`).
-    *   **Cert Storage:** `/data/acme.json` (hostPath mount with `600` permissions via initContainer).
+    *   **Ingress Controller:** Traefik (bundled with K3s, custom configured via `HelmChartConfig`).
+    *   **TLS/ACME:** Let's Encrypt **Staging** (via Traefik `letsencrypt` resolver).
+    *   **Cert Storage:** `/data/traefik/acme.json` (Managed via Static PV `traefik-acme-pv` + PVC).
+    *   **Redirect:** Global HTTP -> HTTPS enforcement enabled.
 
 ## 3. GitOps Configuration
 *   **Pattern:** **App of Apps**.
@@ -41,17 +42,18 @@ This document serves as a "state of the world" summary for the `cosmos-next` pro
 *   `cloud-init.yaml`: The "Source of Truth" for node configuration. Contains K3s install script, Traefik config, and inlined ArgoCD manifests.
 *   `cosmos/argocd/apps/`: The GitOps source directory.
     *   `argocd-image-updater.yaml`: Deploys the image updater.
-    *   `argocd-ingress.yaml`: Exposes ArgoCD UI (`argo.altair.space`) with HTTP->HTTPS redirect.
-    *   `personal-website-prod.yaml`: Production application manifest.
-    *   `root.yaml`: (Legacy/Reference) The root application definition (now inlined in cloud-init).
+    *   `argocd-ingress.yaml`: Exposes ArgoCD UI (`argo.altair.space`).
+    *   `kepler-orbit.yaml`, `brachi.yaml`, `personal-blog.yaml`: Application manifests.
+    *   `monitoring-storage.yaml`: Defines Static PVs for Prometheus/Alertmanager/Grafana persistence.
 
-## 5. Recent Changes (Feb 1, 2026)
-1.  **Monitoring stack finalized**: Deployed Grafana, Prometheus, and Traefik metrics on port 9101.
-2.  **K9s Config**: Added minimal configuration to show all namespaces by default.
-3.  **Critical Bug Found**: Discovered that `/data` volume was NOT mounting via cloud-init `mounts` (failing silently). All data was being written to the ephemeral root disk.
+## 5. Recent Changes (Feb 2, 2026)
+1.  **Traefik Persistence Solved:** Implemented a robust **Static PV/PVC** strategy for Traefik's ACME storage, pointing to `/data/traefik`. This resolved permissions issues and ensured certificates survive nuclear rebuilds.
+2.  **Global HTTPS Redirect:** Enabled `web` -> `websecure` redirection using the new Traefik v3 syntax (`ports.web.redirections.entryPoint`).
+3.  **Application Migration:** Migrated `kepler-orbit`, `brachi`, and `personal-blog` from Flux to ArgoCD.
+4.  **Ingress Fixes:** Removed conflicting `cert-manager` annotations and explicit `tls` blocks from Ingress resources to let Traefik's native ACME resolver handle certificates correctly.
+5.  **Verified Persistence:** Confirmed via "Nuclear Rebuild" that certificates are reused and monitoring data is preserved.
 
 ## 6. Next Steps / TODOs
-*   [ ] **Fix Persistence**: Move mounting logic to `runcmd` with a retry/wait loop to ensure the block device is ready before K3s starts.
 *   [ ] **Switch to Production LE**: Change `LetsEncryptEnv.STAGING` to `LetsEncryptEnv.PRODUCTION` in `__main__.py`.
-*   [ ] **CI/CD Pipeline**: Implement GitHub Actions to run `pulumi up`.
+*   [ ] **CI/CD Pipeline**: Implement GitHub Actions to run `pulumi up` automatically.
 

@@ -28,9 +28,13 @@ For the Prometheus Operator stack, we use a **Static HostPath Binding** strategy
 
 ### SSL/TLS Strategy (Traefik Native)
 To prevent Let's Encrypt rate limits during instance swaps:
-1.  **Configuration:** Traefik is configured via `HelmChartConfig` to use a HostPath mount.
-2.  **Mount Path:** The host volume `/data` is mounted to `/mnt/data` inside the Traefik container (avoiding collisions with chart defaults).
-3.  **Persistence:** ACME certificates are stored at `/mnt/data/traefik/acme.json`.
+1.  **Static Persistence:** We use the same **Static HostPath Binding** strategy for Traefik's ACME storage as we do for Prometheus.
+2.  **Implementation:**
+    - `cloud-init.yaml` pre-creates a Static `PersistentVolume` (`traefik-acme-pv`) pointing to `/data/traefik` on the host.
+    - It also creates a corresponding `PersistentVolumeClaim` (`traefik-acme-pvc`).
+    - The Traefik Helm configuration (`HelmChartConfig`) is set to use `persistence.existingClaim: traefik-acme-pvc`.
+3.  **Permissions:** An `initContainer` in the Traefik deployment ensures ownership of `/data/traefik` is set to `65532:65532` (Traefik user) so the container can write `acme.json`.
+4.  **Redirection:** Global HTTP (`web`) to HTTPS (`websecure`) redirection is enforced via Traefik v3 Helm values syntax.
 
 ## Lifecycle & Data Consistency
 
