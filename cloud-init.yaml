@@ -57,7 +57,7 @@ write_files:
         valuesContent: |-
           additionalArguments:
             - "--certificatesresolvers.letsencrypt.acme.email={email}"
-            - "--certificatesresolvers.letsencrypt.acme.storage=/data/traefik/acme.json"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
             - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
             - "--certificatesresolvers.letsencrypt.acme.caserver={ca_server}"
             - "--log.level=DEBUG"
