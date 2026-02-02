@@ -19,10 +19,6 @@ spec:
             name: argocd-server
             port:
               name: http
-  tls:
-  - hosts:
-    - argo.altair.space
-    secretName: argocd-server-tls
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
