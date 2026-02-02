@@ -26,39 +26,38 @@ write_files:
         valuesContent: |-
           additionalArguments:
             - "--certificatesresolvers.letsencrypt.acme.email={email}"
-            - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/data/traefik/acme.json"
             - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
             - "--certificatesresolvers.letsencrypt.acme.caserver={ca_server}"
-          deployment:
-            initContainers:
-              - name: volume-permission
-                image: busybox:latest
-                command:
-                  - sh
-                  - -c
-                  - touch /data/acme.json; chmod -v 600 /data/acme.json
-                volumeMounts:
-                  - mountPath: /data
-                    name: acme-data
-            additionalVolumes:
-              - name: acme-data
-                hostPath:
-                  path: /data/traefik
-            additionalVolumeMounts:
-              - name: acme-data
-                mountPath: /data
+            - "--log.level=DEBUG"
+            - "--accesslog=true"
           persistence:
-            enabled: false
-              ports:
-                web:
-                  redirectTo:
-                    port: websecure
-                metrics:
-                  port: 9101
-                  exposedPort: 9101
-                  expose:
-                    default: true
-          
+            enabled: true
+            storageClassName: ""
+            existingClaim: ""
+            mountPath: /data/traefik
+            accessMode: ReadWriteOnce
+            size: 1Mi
+            hostPath: /data/traefik
+          initContainers:
+            - name: volume-permission
+              image: busybox:latest
+              command:
+                - sh
+                - -c
+                - mkdir -p /data/traefik; chmod -v 755 /data/traefik
+              volumeMounts:
+                - mountPath: /data/traefik
+                  name: data
+          ports:
+            web:
+              redirectTo:
+                port: websecure
+            metrics:
+              port: 9101
+              exposedPort: 9101
+              expose:
+                default: true
           metrics:
             prometheus:
               entryPoint: metrics
