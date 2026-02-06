@@ -4,3 +4,4 @@ venv/
 .pulumi_passphrase
 keys/
 secret-input.yaml
+argocd-secret-input.yaml
