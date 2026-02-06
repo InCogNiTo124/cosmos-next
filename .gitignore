@@ -2,3 +2,5 @@
 venv/
 .envrc
 .pulumi_passphrase
+keys/
+secret-input.yaml

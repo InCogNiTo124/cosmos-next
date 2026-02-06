@@ -107,9 +107,9 @@ write_files:
       type: kubernetes.io/tls
       stringData:
         tls.crt: |
-          {ss_public_cert}
+{ss_public_cert}
         tls.key: |
-          {ss_private_key}
+{ss_private_key}
 
   # Install ArgoCD via HelmChart
   - path: /var/lib/rancher/k3s/server/manifests/argocd-helm.yaml

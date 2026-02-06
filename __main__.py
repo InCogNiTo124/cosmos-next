@@ -29,6 +29,10 @@ ss_public_cert = config.get("sealed_secrets_public_cert")
 ss_private_key = config.get_secret("sealed_secrets_private_key")
 
 
+def indent(text, spaces):
+    return "\n".join(" " * spaces + line for line in text.splitlines())
+
+
 # 2. Template Cloud Init
 def create_cloud_init(args):
     vol_id, ss_priv, ss_pub = args
@@ -41,8 +45,8 @@ def create_cloud_init(args):
         email="msmetko@msmetko.xyz",
         ca_server=LetsEncryptEnv.STAGING.value,
         gh_pat=os.environ.get("GH_PAT", ""),
-        ss_private_key=ss_priv,
-        ss_public_cert=ss_pub
+        ss_private_key=indent(ss_priv, 10),
+        ss_public_cert=indent(ss_pub, 10)
     )
 
 
