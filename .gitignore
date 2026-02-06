@@ -1,3 +1,4 @@
 *.pyc
 venv/
 .envrc
+.pulumi_passphrase

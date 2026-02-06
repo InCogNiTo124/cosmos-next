@@ -24,8 +24,14 @@ volume = hcloud.Volume(
 )
 
 
+config = pulumi.Config()
+ss_public_cert = config.get("sealed_secrets_public_cert")
+ss_private_key = config.get_secret("sealed_secrets_private_key")
+
+
 # 2. Template Cloud Init
-def create_cloud_init(vol_id):
+def create_cloud_init(args):
+    vol_id, ss_priv, ss_pub = args
     with pathlib.Path("cloud-init.yaml").open() as file:
         template = file.read()
     
@@ -34,11 +40,14 @@ def create_cloud_init(vol_id):
         volume_id=vol_id,
         email="msmetko@msmetko.xyz",
         ca_server=LetsEncryptEnv.STAGING.value,
-        gh_pat=os.environ.get("GH_PAT", "")
+        gh_pat=os.environ.get("GH_PAT", ""),
+        ss_private_key=ss_priv,
+        ss_public_cert=ss_pub
     )
 
 
-cloud_init_data = volume.id.apply(create_cloud_init)
+cloud_init_args = pulumi.Output.all(volume.id, ss_private_key, ss_public_cert)
+cloud_init_data = cloud_init_args.apply(create_cloud_init)
 
 ssh_key = hcloud.SshKey("ARIES", public_key=os.environ.get("ARIES_PUB"))
 

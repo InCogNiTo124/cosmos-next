@@ -94,6 +94,23 @@ write_files:
               addEntryPointsLabels: true
               addRoutersLabels: true
 
+  # Pre-seed Sealed Secrets Master Key
+  - path: /var/lib/rancher/k3s/server/manifests/sealed-secrets-key.yaml
+    content: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: sealed-secrets-key
+        namespace: kube-system
+        labels:
+          sealedsecrets.bitnami.com/sealed-secrets-key: active
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: |
+          {ss_public_cert}
+        tls.key: |
+          {ss_private_key}
+
   # Install ArgoCD via HelmChart
   - path: /var/lib/rancher/k3s/server/manifests/argocd-helm.yaml
     content: |
