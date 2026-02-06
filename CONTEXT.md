@@ -39,21 +39,29 @@ This document serves as a "state of the world" summary for the `cosmos-next` pro
 
 ## 4. Key File Locations
 *   `__main__.py`: Pulumi infrastructure definition. Handles `cloud-init` templating (via `.format()`) and resource lifecycle.
-*   `cloud-init.yaml`: The "Source of Truth" for node configuration. Contains K3s install script, Traefik config, and inlined ArgoCD manifests.
+*   `cloud-init.yaml`: The "Source of Truth" for node configuration. Contains K3s install script, Traefik config, Sealed Secrets bootstrapping, and inlined ArgoCD manifests.
 *   `cosmos/argocd/apps/`: The GitOps source directory.
     *   `argocd-image-updater.yaml`: Deploys the image updater.
     *   `argocd-ingress.yaml`: Exposes ArgoCD UI (`argo.altair.space`).
     *   `kepler-orbit.yaml`, `brachi.yaml`, `personal-blog.yaml`: Application manifests.
     *   `monitoring-storage.yaml`: Defines Static PVs for Prometheus/Alertmanager/Grafana persistence.
+    *   `sealed-secrets.yaml`: Deploys the Bitnami Sealed Secrets Controller.
+    *   `*_sealed_secret.yaml`: Encrypted credentials for apps (Grafana, Argo CD).
 
-## 5. Recent Changes (Feb 2, 2026)
+## 5. Recent Changes (Feb 6, 2026)
 1.  **Traefik Persistence Solved:** Implemented a robust **Static PV/PVC** strategy for Traefik's ACME storage, pointing to `/data/traefik`. This resolved permissions issues and ensured certificates survive nuclear rebuilds.
 2.  **Global HTTPS Redirect:** Enabled `web` -> `websecure` redirection using the new Traefik v3 syntax (`ports.web.redirections.entryPoint`).
 3.  **Application Migration:** Migrated `kepler-orbit`, `brachi`, and `personal-blog` from Flux to ArgoCD.
 4.  **Ingress Fixes:** Removed conflicting `cert-manager` annotations and explicit `tls` blocks from Ingress resources to let Traefik's native ACME resolver handle certificates correctly.
 5.  **Verified Persistence:** Confirmed via "Nuclear Rebuild" that certificates are reused and monitoring data is preserved.
+6.  **Secret Management:** Implemented **Bitnami Sealed Secrets** with a "Bootstrapped Master Key" strategy.
+    *   Master Key generated locally and stored in Pulumi Config (encrypted with passphrase).
+    *   Key injected into `cloud-init.yaml` and pre-seeded into the cluster (`sealed-secrets-key`).
+    *   Controller automatically adopts the key on startup.
+    *   Grafana and Argo CD admin passwords are now sealed, committed to Git, and persistent across rebuilds.
 
 ## 6. Next Steps / TODOs
+*   [ ] **Local Development Loop**: Replicate the environment locally using `k3d`.
 *   [ ] **Switch to Production LE**: Change `LetsEncryptEnv.STAGING` to `LetsEncryptEnv.PRODUCTION` in `__main__.py`.
 *   [ ] **CI/CD Pipeline**: Implement GitHub Actions to run `pulumi up` automatically.
 

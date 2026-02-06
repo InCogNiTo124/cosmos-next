@@ -69,6 +69,27 @@ To achieve fully automated deployments, we utilize **ArgoCD Image Updater**:
 - **Automation:** When a newer image is detected, it automatically updates the Kubernetes manifest.
 - **Write-back:** It commits the new image tag directly back to the Git repository, ensuring the source of truth is always up to date.
 
+## Secret Management
+
+### The "Bootstrapped Sealed Secrets" Strategy
+We achieve **Total Reproducibility** for secrets (passwords survive total cluster destruction) by combining Bitnami Sealed Secrets with Pulumi injection.
+
+1.  **Master Key:**
+    - A single RSA key pair (Master Key) is generated locally.
+    - This key is stored encrypted in the **Pulumi Configuration** (`Pulumi.dev.yaml`), protected by a local passphrase or cloud backend.
+2.  **Bootstrap Injection:**
+    - During `pulumi up`, the Master Key is read from config and injected into the `cloud-init.yaml` template.
+    - `cloud-init` writes this key to a Kubernetes Secret (`sealed-secrets-key`) in the `kube-system` namespace *before* K3s/ArgoCD fully initialize.
+3.  **Controller Adoption:**
+    - The Sealed Secrets Controller (deployed via Argo CD) starts up.
+    - It detects the pre-existing `sealed-secrets-key` and adopts it as its active decryption key (instead of generating a random new one).
+4.  **Secret Sealing:**
+    - Developers use the public key to encrypt secrets locally (`kubeseal`) into `SealedSecret` manifests.
+    - These manifests are safe to commit to Git.
+    - Upon deployment, the controller decrypts them using the injected Master Key.
+
+**Result:** You can delete the entire server and volume, run `pulumi up`, and all application secrets (Grafana, Argo CD admin passwords) will be restored and working automatically.
+
 ## Monitoring Architecture
 
 ### The "Port 9100" Conflict (Traefik vs. Node Exporter)
