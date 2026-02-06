@@ -127,6 +127,9 @@ write_files:
         # Wait for the chart to be ready
         valuesContent: |-
           configs:
+            secret:
+              annotations:
+                sealedsecrets.bitnami.com/managed: "true"
             cm:
               timeout.reconciliation: "60s"
           server:
