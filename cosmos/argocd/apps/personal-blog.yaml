@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/InCogNiTo124/cosmos-next
     targetRevision: HEAD
-    path: cosmos/apps/personal-blog
+    path: cosmos/overlays/prod/personal-blog
   destination:
     server: https://kubernetes.default.svc
     namespace: personal-blog

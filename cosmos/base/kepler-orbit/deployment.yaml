@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kepler-orbit
+  labels:
+    app: kepler-orbit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kepler-orbit
+  template:
+    metadata:
+      labels:
+        app: kepler-orbit
+    spec:
+      containers:
+        - name: kepler-orbit
+          image: ghcr.io/incognito124/kepler-orbit:latest
+          ports:
+            - name: web
+              containerPort: 80

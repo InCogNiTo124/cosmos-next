@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: personal-blog
+  labels:
+    app: personal-blog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: personal-blog
+  template:
+    metadata:
+      labels:
+        app: personal-blog
+    spec:
+      containers:
+        - name: blog
+          image: ghcr.io/incognito124/personal-blog-frontend:latest
+          ports:
+            - name: web
+              containerPort: 3000
+          env:
+            - name: BLOG_DB
+              value: "localhost:80"
+        - name: blog-db
+          image: ghcr.io/incognito124/personal-blog-database:latest
+          ports:
+            - name: web
+              containerPort: 80
