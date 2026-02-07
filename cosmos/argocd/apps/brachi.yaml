@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/InCogNiTo124/cosmos-next
     targetRevision: HEAD
-    path: cosmos/apps/brachi
+    path: cosmos/overlays/prod/brachi
   destination:
     server: https://kubernetes.default.svc
     namespace: brachi
